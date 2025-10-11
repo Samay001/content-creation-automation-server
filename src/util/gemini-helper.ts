@@ -2,8 +2,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const API_KEY = "";
-console.log('🔑 Gemini API Key loaded:', API_KEY ? 'Yes' : 'No');
+// Lazy loading for API key
+function getGeminiApiKey(): string {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
+  }
+  return apiKey;
+}
 
 const CUSTOM_PROMPT = "Cinematic camera work on this scene: [Briefly describe the image content, e.g., 'a busy street scene at night' or 'a peaceful forest landscape']. Execute a fluid, slow-motion dolly zoom and sweeping arc motion. Key focus on dynamic animation and micro-movements: ensure all visible humans/objects are in motion (e.g., people walking, leaves rustling, cars passing). Add subtle atmospheric effects like gentle fog, lens flare, or light particles. Maintain a high-quality, hyper-realistic 4K film aesthetic.";
 
@@ -88,9 +94,7 @@ export async function generatePromptFromImage(
   console.log(`📁 Image: ${imagePath}\n`);
   
   try {
-    if (!API_KEY) {
-      throw new Error('GEMINI_API_KEY is not set in environment variables');
-    }
+    const API_KEY = getGeminiApiKey();
 
     const resolvedPath = resolvePath(imagePath);
     
@@ -157,9 +161,7 @@ export async function generatePromptFromBuffer(
   console.log('🔍 Generating video prompt from image buffer...');
   
   try {
-    if (!API_KEY) {
-      throw new Error('GEMINI_API_KEY is not set in environment variables');
-    }
+    const API_KEY = getGeminiApiKey();
 
     const base64String = imageBuffer.toString('base64');
     

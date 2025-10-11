@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ImageService } from './image.service';
+import { CaptionOptions } from '../util/caption-helper';
 
 @Controller('image')
 export class ImageController {
@@ -20,5 +21,19 @@ export class ImageController {
       return { error: 'Image URL is required' };
     }
     return this.imageService.generatePrompt(imageUrl);
+  }
+
+  @Post('generate-caption')
+  async generateCaption(@Body() body: { 
+    imagePrompt: string; 
+    options?: CaptionOptions 
+  }) {
+    const { imagePrompt, options } = body;
+    
+    if (!imagePrompt) {
+      return { error: 'Image prompt is required' };
+    }
+    
+    return this.imageService.generateCaption(imagePrompt, options);
   }
 }

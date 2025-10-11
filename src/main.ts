@@ -1,6 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
+import * as dotenv from 'dotenv';
+
+// Load environment variables before anything else
+dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

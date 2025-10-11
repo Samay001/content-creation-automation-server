@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
 import { generatePromptFromImage } from '../util/gemini-helper';
+import { generateInstagramContent, CaptionOptions } from '../util/caption-helper';
 
 @Injectable()
 export class ImageService {
@@ -202,6 +203,46 @@ export class ImageService {
           console.error('Failed to clean up temp file:', cleanupError);
         }
       }
+    }
+  }
+
+  /**
+   * Generates Instagram caption and hashtags from a prompt
+   */
+  async generateCaption(imagePrompt: string, options?: CaptionOptions) {
+    try {
+      if (!imagePrompt) {
+        throw new BadRequestException('Image prompt is required.');
+      }
+
+      console.log('🎬 Generating Instagram content for prompt:', imagePrompt.substring(0, 100) + '...');
+
+      // Use the refactored caption helper to generate Instagram content
+      const instagramContent = await generateInstagramContent(imagePrompt, {
+        maxHashtags: 10,
+        tone: 'casual',
+        maxCaptionLength: 300,
+        includeCallToAction: true,
+        ...options // Allow custom options to override defaults
+      });
+
+      return {
+        caption: instagramContent.caption,
+        hashtags: instagramContent.hashtags,
+        fullContent: instagramContent.fullContent,
+        metadata: {
+          captionLength: instagramContent.caption.length,
+          hashtagCount: instagramContent.hashtags.length,
+          generatedAt: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error('Error in generateCaption:', error);
+      console.error('Error stack:', error.stack);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to generate caption: ${error.message}`);
     }
   }
 }
