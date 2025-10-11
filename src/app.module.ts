@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {EmailApprovalModule} from './email/email.module';
 import {ImageModule} from './image/image.module';
+import {VideoModule} from './video/video.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import {ImageModule} from './image/image.module';
       cache: true, 
     }),
     EmailApprovalModule,
-    ImageModule
+    ImageModule,
+    VideoModule
   ],
   controllers: [AppController],
   providers: [AppService],
