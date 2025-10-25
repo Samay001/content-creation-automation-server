@@ -15,25 +15,17 @@ export class ImageController {
     };
   }
 
-  @Post('generate-prompt')
-  async generatePrompt(@Body('imageUrl') imageUrl: string) {
+  @Post('generate-caption-from-url')
+  async generateCaptionFromUrl(@Body() body: { 
+    imageUrl: string; 
+    options?: CaptionOptions 
+  }) {
+    const { imageUrl, options } = body;
+    
     if (!imageUrl) {
       return { error: 'Image URL is required' };
     }
-    return this.imageService.generatePrompt(imageUrl);
-  }
-
-  @Post('generate-caption')
-  async generateCaption(@Body() body: { 
-    imagePrompt: string; 
-    options?: CaptionOptions 
-  }) {
-    const { imagePrompt, options } = body;
-    
-    if (!imagePrompt) {
-      return { error: 'Image prompt is required' };
-    }
-    
-    return this.imageService.generateCaption(imagePrompt, options);
+  
+    return this.imageService.generateCaptionFromImageUrl(imageUrl, options);
   }
 }

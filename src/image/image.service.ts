@@ -3,8 +3,7 @@ import * as sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 import axios from 'axios';
-import { generatePromptFromImage } from '../util/gemini-helper';
-import { generateInstagramContent, CaptionOptions } from '../util/caption-helper';
+import { generateInstagramContentFromImage, CaptionOptions } from '../util/caption-helper';
 
 @Injectable()
 export class ImageService {
@@ -142,12 +141,12 @@ export class ImageService {
     }
   }
 
-  /**
-   * Generates a prompt from an image URL using Gemini
-   */
-  async generatePrompt(imageUrl: string) {
-    let tempFilePath: string | null = null;
 
+
+  /**
+   * Generates Instagram caption and hashtags directly from image URL (without generating prompt first)
+   */
+  async generateCaptionFromImageUrl(imageUrl: string, options?: CaptionOptions) {
     try {
       if (!imageUrl) {
         throw new BadRequestException('Image URL is required.');
@@ -157,72 +156,15 @@ export class ImageService {
         throw new BadRequestException('Invalid image URL provided.');
       }
 
-      // Download image
-      console.log('Downloading image from:', imageUrl);
-      const imageBuffer = await this.downloadImage(imageUrl);
-      console.log('Image downloaded, buffer size:', imageBuffer.length);
+      console.log('🎬 Generating Instagram content directly from image URL using Gemini Vision:', imageUrl);
 
-      // Ensure temp directory exists
-      if (!fs.existsSync(this.tempDir)) {
-        fs.mkdirSync(this.tempDir, { recursive: true });
-      }
-
-      // Save to temporary file with absolute path
-      const filename = `temp-${Date.now()}.jpg`;
-      tempFilePath = path.resolve(this.tempDir, filename);
-      console.log('Saving temp file to:', tempFilePath);
-      
-      fs.writeFileSync(tempFilePath, imageBuffer);
-      
-      // Verify file was created
-      if (!fs.existsSync(tempFilePath)) {
-        throw new Error('Failed to create temporary file');
-      }
-      console.log('Temp file created successfully');
-
-      // Generate prompt using Gemini
-      console.log('Calling generatePromptFromImage with path:', tempFilePath);
-      const prompt = await generatePromptFromImage(tempFilePath);
-      console.log('Prompt generated successfully');
-
-      return { prompt };
-    } catch (error) {
-      console.error('Error in generatePrompt:', error);
-      console.error('Error stack:', error.stack);
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new BadRequestException(`Failed to generate prompt: ${error.message}`);
-    } finally {
-      // Clean up temp file
-      if (tempFilePath && fs.existsSync(tempFilePath)) {
-        try {
-          fs.unlinkSync(tempFilePath);
-          console.log('Temp file cleaned up');
-        } catch (cleanupError) {
-          console.error('Failed to clean up temp file:', cleanupError);
-        }
-      }
-    }
-  }
-
-  /**
-   * Generates Instagram caption and hashtags from a prompt
-   */
-  async generateCaption(imagePrompt: string, options?: CaptionOptions) {
-    try {
-      if (!imagePrompt) {
-        throw new BadRequestException('Image prompt is required.');
-      }
-
-      console.log('🎬 Generating Instagram content for prompt:', imagePrompt.substring(0, 100) + '...');
-
-      // Use the refactored caption helper to generate Instagram content
-      const instagramContent = await generateInstagramContent(imagePrompt, {
-        maxHashtags: 10,
+      // Use Gemini Vision API to generate Instagram content directly from the image
+      const instagramContent = await generateInstagramContentFromImage(imageUrl, {
+        maxHashtags: 15,
         tone: 'casual',
         maxCaptionLength: 300,
         includeCallToAction: true,
+        targetAudience: 'social media users',
         ...options // Allow custom options to override defaults
       });
 
@@ -233,16 +175,17 @@ export class ImageService {
         metadata: {
           captionLength: instagramContent.caption.length,
           hashtagCount: instagramContent.hashtags.length,
-          generatedAt: new Date().toISOString()
+          generatedAt: new Date().toISOString(),
+          imageUrl: imageUrl
         }
       };
     } catch (error) {
-      console.error('Error in generateCaption:', error);
+      console.error('Error in generateCaptionFromImageUrl:', error);
       console.error('Error stack:', error.stack);
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException(`Failed to generate caption: ${error.message}`);
+      throw new BadRequestException(`Failed to generate caption from image URL: ${error.message}`);
     }
   }
 }

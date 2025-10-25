@@ -11,7 +11,7 @@ function getGeminiApiKey(): string {
   return apiKey;
 }
 
-const CUSTOM_PROMPT = "Cinematic camera work on this scene: [Briefly describe the image content, e.g., 'a busy street scene at night' or 'a peaceful forest landscape']. Execute a fluid, slow-motion dolly zoom and sweeping arc motion. Key focus on dynamic animation and micro-movements: ensure all visible humans/objects are in motion (e.g., people walking, leaves rustling, cars passing). Add subtle atmospheric effects like gentle fog, lens flare, or light particles. Maintain a high-quality, hyper-realistic 4K film aesthetic.";
+const SIMPLE_DYNAMIC_PROMPT = "Create a dynamic video from this image. Add natural movement and life to the scene: gentle camera motion, moving elements like leaves, water, clouds, or people. Keep it smooth and realistic. Focus on bringing the static image to life with subtle animations and flowing movements.";
 
 /**
  * Resolves file paths including home directory (~/) and relative paths
@@ -84,11 +84,11 @@ function imageToBase64(imagePath: string): { inlineData: { data: string; mimeTyp
 }
 
 /**
- * Generates a cinematic video prompt from an image using Gemini API
+ * Generates a simple dynamic video prompt from an image using Gemini API
  */
 export async function generatePromptFromImage(
   imagePath: string,
-  customPrompt: string = CUSTOM_PROMPT
+  customPrompt: string = SIMPLE_DYNAMIC_PROMPT
 ): Promise<string> {
   console.log('🔍 Generating video prompt from image...');
   console.log(`📁 Image: ${imagePath}\n`);
@@ -156,7 +156,7 @@ export async function generatePromptFromImage(
 export async function generatePromptFromBuffer(
   imageBuffer: Buffer,
   mimeType: string = 'image/jpeg',
-  customPrompt: string = CUSTOM_PROMPT
+  customPrompt: string = SIMPLE_DYNAMIC_PROMPT
 ): Promise<string> {
   console.log('🔍 Generating video prompt from image buffer...');
   
@@ -217,3 +217,5 @@ export async function generatePromptFromBuffer(
     throw new Error(`Failed to generate prompt: ${error.message}`);
   }
 }
+
+

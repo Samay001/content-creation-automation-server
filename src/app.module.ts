@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 import {EmailApprovalModule} from './email/email.module';
 import {ImageModule} from './image/image.module';
 import {VideoModule} from './video/video.module';
+import {WorkflowModule} from './workflow/workflow.module';
+import {InstagramModule} from './instagram/instagram.module';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import {VideoModule} from './video/video.module';
     }),
     EmailApprovalModule,
     ImageModule,
-    VideoModule
+    VideoModule,
+    WorkflowModule,
+    InstagramModule
   ],
   controllers: [AppController],
   providers: [AppService],
