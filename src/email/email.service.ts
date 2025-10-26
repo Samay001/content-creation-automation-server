@@ -18,9 +18,8 @@ export class EmailApprovalService {
   async sendApprovalEmail(recipientEmail: string): Promise<void> {
     const transporter = this.createTransporter();
 
-    const PORT = process.env.PORT;
-    const approvalUrl = `http://localhost:${PORT}/email-approval/action?type=approve`;
-    const rejectUrl = `http://localhost:${PORT}/email-approval/action?type=reject`;
+    const approvalUrl = `${process.env.BASE_DEPLOYED_URL}/email-approval/action?type=approve`;
+    const rejectUrl = `${process.env.BASE_DEPLOYED_URL}/email-approval/action?type=reject`;
 
     const htmlContent = `
       <div style="font-family: sans-serif; padding: 20px;">
@@ -56,8 +55,8 @@ export class EmailApprovalService {
     
     
     //  approval and reject URLs with content dataCreate
-    const approveUrl = `http://localhost:${PORT}/email-approval/content-action?action=approve&videoUrl=${encodeURIComponent(videoUrl)}&caption=${encodeURIComponent(caption)}&hashtags=${encodeURIComponent(hashtagsString)}`;
-    const rejectUrl = `http://localhost:${PORT}/email-approval/content-action?action=reject`;
+    const approveUrl = `${process.env.BASE_DEPLOYED_URL}/email-approval/content-action?action=approve&videoUrl=${encodeURIComponent(videoUrl)}&caption=${encodeURIComponent(caption)}&hashtags=${encodeURIComponent(hashtagsString)}`;
+    const rejectUrl = `${process.env.BASE_DEPLOYED_URL}/email-approval/content-action?action=reject`;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
