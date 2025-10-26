@@ -8,6 +8,39 @@ export interface GenerateVideoRequest {
   duration?: "5" | "10";
 }
 
+export interface AdvancedGenerateVideoRequest extends GenerateVideoRequest {
+  webhookUrl?: string;
+  imageTail?: string;
+  negativePrompt?: string;
+  cfgScale?: number;
+  staticMask?: string;
+  dynamicMasks?: Array<{
+    mask: string;
+    trajectories: Array<{
+      x: number;
+      y: number;
+    }>;
+  }>;
+}
+
+interface FreepikVideoRequest {
+  webhook_url: string;
+  image: string;
+  image_tail?: string;
+  prompt: string;
+  negative_prompt?: string;
+  duration: string;
+  cfg_scale: number;
+  static_mask?: string;
+  dynamic_masks?: Array<{
+    mask: string;
+    trajectories: Array<{
+      x: number;
+      y: number;
+    }>;
+  }>;
+}
+
 export interface GenerateVideoResponse {
   videoUrl: string;
   taskId: string;
@@ -25,7 +58,7 @@ interface FreepikTaskResponse {
 @Injectable()
 export class VideoService {
   private readonly freepikApiKey: string;
-  private readonly freepikBaseUrl = 'https://api.freepik.com/v1/ai/image-to-video/kling-v2';
+  private readonly freepikBaseUrl = 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-1-pro';
 
   constructor(private configService: ConfigService) {
     this.freepikApiKey = this.configService.get<string>('FREEPIK_API_KEY');
@@ -36,7 +69,12 @@ export class VideoService {
 
 
 
-  private async createVideoTask(imageBase64: string, prompt: string, duration: string): Promise<string> {
+  private async createVideoTask(
+    imageBase64: string, 
+    prompt: string, 
+    duration: string,
+    options?: Partial<AdvancedGenerateVideoRequest>
+  ): Promise<string> {
     try {
       if (!imageBase64) {
         throw new BadRequestException('Image base64 data is required');
@@ -51,13 +89,31 @@ export class VideoService {
 
       console.log('📤 Creating video generation task with Freepik API...');
       
+      // Prepare the complete request body as per the cURL specification
+      const requestBody: FreepikVideoRequest = {
+        webhook_url: options?.webhookUrl || "https://www.example.com/webhook",
+        image: base64Data,
+        image_tail: options?.imageTail, // Optional field - can be set to undefined/null
+        prompt: prompt,
+        negative_prompt: options?.negativePrompt, // Optional field - can be set to undefined/null
+        duration: duration,
+        cfg_scale: options?.cfgScale ?? 0.5, // Default value from cURL, use nullish coalescing to allow 0
+        static_mask: options?.staticMask, // Optional field - can be set to undefined/null
+        dynamic_masks: options?.dynamicMasks // Optional field - can be set to undefined/null
+      };
+
+      // Remove undefined fields to clean up the request
+      const cleanedRequestBody = Object.fromEntries(
+        Object.entries(requestBody).filter(([_, value]) => value !== undefined)
+      );
+
+      console.log('📋 Request body fields:', Object.keys(cleanedRequestBody).join(', '));
+      if (options?.negativePrompt) console.log('🚫 Using negative prompt:', options.negativePrompt);
+      if (options?.cfgScale !== undefined) console.log('⚙️  CFG Scale:', options.cfgScale);
+      
       const response = await axios.post(
         this.freepikBaseUrl,
-        {
-          image: base64Data,
-          duration: duration,
-          prompt: prompt
-        },
+        cleanedRequestBody,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -96,7 +152,7 @@ export class VideoService {
         console.log(`📡 Polling attempt ${attempt}/${maxAttempts}...`);
         
         const response = await axios.get<FreepikTaskResponse>(
-          `${this.freepikBaseUrl}/${taskId}`,
+          `https://api.freepik.com/v1/ai/image-to-video/kling-v2-1/${taskId}`,
           {
             headers: {
               'x-freepik-api-key': this.freepikApiKey
@@ -143,7 +199,7 @@ export class VideoService {
     throw new InternalServerErrorException('Video generation timed out after 2 minutes');
   }
 
-  async generateVideo({ imageBase64, prompt, duration = "5" }: GenerateVideoRequest): Promise<GenerateVideoResponse> {
+  async generateVideo({ imageBase64, prompt, duration = "5", ...options }: AdvancedGenerateVideoRequest): Promise<GenerateVideoResponse> {
     try {
       console.log('🎬 Starting video generation with Freepik API...');
       
@@ -154,8 +210,8 @@ export class VideoService {
       console.log("⏱️  Duration:", duration, "seconds");
       console.log("🔄 Creating video generation task...\n");
       
-      // Step 1: Create the video generation task
-      const taskId = await this.createVideoTask(imageBase64, prompt, duration);
+      // Step 1: Create the video generation task with all options
+      const taskId = await this.createVideoTask(imageBase64, prompt, duration, options);
       
       // Step 2: Poll for task completion with 2-minute timeout
       const videoUrl = await this.pollTaskStatus(taskId);
@@ -178,5 +234,10 @@ export class VideoService {
       }
       throw new InternalServerErrorException(`Error generating video: ${error.message}`);
     }
+  }
+
+  // Convenience method to maintain backward compatibility
+  async generateSimpleVideo(request: GenerateVideoRequest): Promise<GenerateVideoResponse> {
+    return this.generateVideo(request);
   }
 }
