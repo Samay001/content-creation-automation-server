@@ -14,7 +14,7 @@ export class CronService {
     // Default image URLs for content creation
     // You can replace these with your own image URLs
     this.defaultImageUrls = [
-      'https://drive.google.com/file/d/1w7uRT4cubko-dx-Ry9VCrLwoT__sjEhc/view?usp=drive_link',
+      'https://drive.google.com/file/d/1vjDOt5iDdm8OzZT6mrq95hvRRXKZkLpL/view?usp=drive_link',
     ];
     
     this.logger.log('🚀 Workflow service initialized (Cloud Run mode - no cron jobs)');
